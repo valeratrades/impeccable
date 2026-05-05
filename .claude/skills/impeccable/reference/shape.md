@@ -36,6 +36,7 @@ Discovery must include at least one user-answer round unless PRODUCT.md, DESIGN.
 - What are the realistic ranges? (Minimum, typical, maximum, e.g., 0 items, 5 items, 500 items)
 - What are the edge cases? (Empty state, error state, first-time use, power user)
 - Is any content dynamic? What changes and how often?
+- What visual assets are real content here? Note required images, product shots, illustrations, maps, textures, diagrams, generated objects, or existing project assets.
 
 ### Design Direction
 
@@ -136,7 +137,7 @@ List every state the feature needs: default, empty, loading, error, success, edg
 How users interact with this feature. What happens on click, hover, scroll? What feedback do they get? What's the flow from entry to completion?
 
 **8. Content Requirements**
-What copy, labels, empty state messages, error messages, and microcopy are needed. Note any dynamic content and its realistic ranges.
+What copy, labels, empty state messages, error messages, and microcopy are needed. Note any dynamic content and its realistic ranges. For image-led surfaces, also list the required image/media roles and their likely source (project asset, generated raster, semantic SVG/CSS, canvas/WebGL, icon library, or accepted omission).
 
 **9. Recommended References**
 Based on the brief, list which impeccable reference files would be most valuable during implementation (e.g., spatial-design.md for complex layouts, motion-design.md for animated features, interaction-design.md for form-heavy features).

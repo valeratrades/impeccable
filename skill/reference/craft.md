@@ -105,11 +105,15 @@ Before building, inventory the approved mock's major visible ingredients:
 
 For each ingredient, decide how it will be implemented: semantic HTML/CSS/SVG, generated asset, sourced project asset, icon library, canvas/WebGL, or an explicitly accepted omission. Do not substitute a different hero composition or new visual driver after approval unless the user approves the change.
 
+If a photographic, architectural, product, or place-led mock becomes generic CSS scenery, decorative diagrams, cards, bullets, or copy, stop and fix it. That is not a harmless interpretation; it is a broken implementation.
+
 Treat the mock as a **north star**, not a screenshot to trace. Do **not** rasterize core UI text or let the mock override the confirmed brief. But if the live result lacks the mock's major visible ingredients, the implementation is wrong.
 
 ## Step 4: Asset Extraction (Need-Gated)
 
 If the chosen direction includes image-native visual ingredients that would materially improve the implementation, generate them as separate assets before building.
+
+Do not replace required visual content with generic cards, bullets, emoji, fake metrics, decorative CSS panels, or filler copy just because sourcing or generating assets would take another step.
 
 Good candidates:
 
@@ -155,6 +159,8 @@ Implement the feature following the design brief. Build in passes so structure, 
 
 Open the result in a browser. In Codex, use browser-use or equivalent browser automation when available; otherwise use Playwright or ask the user for screenshots. Inspect screenshots, not just DOM or terminal output.
 
+Detector or QA output is defect evidence only. A clean detector, empty array, or script pass never means the design is strong. Do not cite clean automated checks as proof that the work is finished.
+
 ### Required viewport pass
 
 Check the experience at the viewports that matter for the brief. Default minimum:
@@ -164,6 +170,8 @@ Check the experience at the viewports that matter for the brief. Default minimum
 - Desktop wide
 
 For each viewport, capture or inspect the rendered state and look for visual defects: overlap, clipping, weak hierarchy, off-grid alignment, awkward whitespace, cramped controls, unreadable type, broken imagery, hover-only functionality, layout shift, and text overflow.
+
+For brand-register and long-form surfaces, inspect each major section individually, not only the full page. Full-page screenshots hide spacing, clipping, and cascade defects.
 
 ### Critique and fix loop
 

@@ -371,6 +371,41 @@ describe('detectHtml — hero-eyebrow-chip', () => {
   });
 });
 
+describe('detectHtml — repeated-section-kickers', () => {
+  const SHOULD_FLAG = [
+    'The Future Is Admitted',
+    'A Private Rehearsal',
+    'Reviewed, Not Sold',
+    'Touch the Future',
+  ];
+  const SHOULD_PASS = [
+    'Breadcrumb Before Heading',
+    'Form Heading Is Separate',
+    'Step Indicator',
+    'Figure Caption Label',
+    'Normal Case Kicker',
+    'Intentional Brand Label',
+  ];
+
+  it('repeated-section-kickers: flags only repeated section scaffolding', async () => {
+    const f = await detectHtml(path.join(FIXTURES, 'repeated-section-kickers.html'));
+    const flagged = new Set();
+    for (const r of f) {
+      if (r.antipattern !== 'repeated-section-kickers') continue;
+      assert.equal(r.severity, 'advisory');
+      const matches = [...(r.snippet || '').matchAll(/"([^"]+)"/g)];
+      if (matches.length) flagged.add(matches[matches.length - 1][1]);
+    }
+
+    for (const text of SHOULD_FLAG) {
+      assert.ok(flagged.has(text), `expected "${text}" to be flagged as repeated-section-kickers`);
+    }
+    for (const text of SHOULD_PASS) {
+      assert.ok(!flagged.has(text), `"${text}" should NOT be flagged as repeated-section-kickers`);
+    }
+  });
+});
+
 describe('detectHtml — motion', () => {
   // jsdom doesn't fully apply class-based styles, so the absolute finding counts
   // are lower than what a real browser would see. The hardcoded counts below are

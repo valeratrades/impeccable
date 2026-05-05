@@ -257,6 +257,16 @@ const ANTIPATTERNS = [
     skillSection: 'Typography',
     skillGuideline: 'tiny uppercase tracked label above the hero headline',
   },
+  {
+    id: 'repeated-section-kickers',
+    category: 'slop',
+    severity: 'advisory',
+    name: 'Repeated section kicker labels',
+    description:
+      'Repeating tiny uppercase tracked labels above section headings turns a brand page into AI editorial scaffolding. Replace them with stronger structure, artifacts, imagery, or a deliberate brand system.',
+    skillSection: 'Typography',
+    skillGuideline: 'repeated eyebrow or kicker labels as section scaffolding',
+  },
 
   // ── Quality: general design and accessibility issues ──
   {
@@ -731,6 +741,15 @@ function checkHeroEyebrow(opts) {
     id: 'hero-eyebrow-chip',
     snippet: `eyebrow chip "${eyebrowSnippet}" above ${headingTag} "${headingTextSnippet}"`,
   }];
+}
+
+function checkRepeatedSectionKickers(opts) {
+  const { candidates, minCount = 3 } = opts;
+  if (!Array.isArray(candidates) || candidates.length < minCount) return [];
+  return candidates.map(candidate => ({
+    id: 'repeated-section-kickers',
+    snippet: `repeated section kicker "${candidate.kickerText}" before ${candidate.headingTag} "${candidate.headingText}" (${candidates.length} on page)`,
+  }));
 }
 
 const LAYOUT_TRANSITION_PROPS = new Set([
@@ -1231,6 +1250,107 @@ function checkElementHeroEyebrowDOM(el) {
   });
 }
 
+const REPEATED_KICKER_SKIP_SELECTOR = [
+  'nav',
+  'form',
+  'table',
+  'thead',
+  'tbody',
+  'tfoot',
+  'figure',
+  'figcaption',
+  'ol',
+  'ul',
+  'li',
+  '[role="navigation"]',
+  '[aria-label*="breadcrumb" i]',
+  '[class*="breadcrumb" i]',
+  '[data-impeccable-allow-kickers]',
+].join(',');
+
+function cleanInlineText(el) {
+  return [...el.childNodes]
+    .filter(n => n.nodeType === 3)
+    .map(n => n.textContent)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isRepeatedKickerCandidate(opts) {
+  const {
+    headingTag,
+    headingText,
+    headingFontSize,
+    kickerTag,
+    kickerText,
+    kickerTextTransform,
+    kickerFontSize,
+    kickerLetterSpacing,
+  } = opts;
+  if (!['h2', 'h3', 'h4'].includes(headingTag)) return false;
+  if (!headingText || headingText.length < 3) return false;
+  if (!(headingFontSize >= 20)) return false;
+  if (!kickerTag || HEADING_TAGS.has(kickerTag)) return false;
+  if (!['p', 'span', 'div', 'small'].includes(kickerTag)) return false;
+  if (!kickerText || kickerText.length < 2 || kickerText.length > 34) return false;
+  if (/^step\s*\d+/i.test(kickerText) || /^\d{1,2}$/.test(kickerText)) return false;
+
+  const isUppercased = kickerTextTransform === 'uppercase'
+    || (/[A-Z]/.test(kickerText) && !/[a-z]/.test(kickerText));
+  if (!isUppercased) return false;
+  if (!(kickerFontSize > 0 && kickerFontSize <= 14)) return false;
+  const minTrackedSpacing = Math.max(1, kickerFontSize * 0.08);
+  if (!(kickerLetterSpacing >= minTrackedSpacing)) return false;
+  return true;
+}
+
+function collectRepeatedSectionKickerCandidates(doc, getStyle, resolveLetterSpacing) {
+  const candidates = [];
+  for (const heading of doc.querySelectorAll('h2, h3, h4')) {
+    if (heading.closest?.(REPEATED_KICKER_SKIP_SELECTOR)) continue;
+    const kicker = heading.previousElementSibling;
+    if (!kicker || kicker.closest?.(REPEATED_KICKER_SKIP_SELECTOR)) continue;
+
+    const headingStyle = getStyle(heading);
+    const kickerStyle = getStyle(kicker);
+    const headingText = (heading.textContent || '').replace(/\s+/g, ' ').trim();
+    const kickerText = cleanInlineText(kicker) || (kicker.textContent || '').replace(/\s+/g, ' ').trim();
+    const headingFontSize = resolveLetterSpacing(headingStyle.fontSize || '', 16) || parseFloat(headingStyle.fontSize) || 0;
+    const kickerFontSize = resolveLetterSpacing(kickerStyle.fontSize || '', 16) || parseFloat(kickerStyle.fontSize) || 0;
+    const kickerLetterSpacing = resolveLetterSpacing(kickerStyle.letterSpacing || '', kickerFontSize);
+
+    if (!isRepeatedKickerCandidate({
+      headingTag: heading.tagName.toLowerCase(),
+      headingText,
+      headingFontSize,
+      kickerTag: kicker.tagName.toLowerCase(),
+      kickerText,
+      kickerTextTransform: kickerStyle.textTransform || '',
+      kickerFontSize,
+      kickerLetterSpacing,
+    })) {
+      continue;
+    }
+
+    candidates.push({
+      headingTag: heading.tagName.toLowerCase(),
+      headingText: headingText.replace(/^"|"$/g, '').slice(0, 60),
+      kickerText: kickerText.slice(0, 40),
+    });
+  }
+  return candidates;
+}
+
+function checkRepeatedSectionKickersDOM() {
+  const candidates = collectRepeatedSectionKickerCandidates(
+    document,
+    (el) => getComputedStyle(el),
+    (value, fontSize) => resolveLengthPx(value, fontSize) || 0,
+  );
+  return checkRepeatedSectionKickers({ candidates });
+}
+
 function checkElementMotionDOM(el) {
   const tag = el.tagName.toLowerCase();
   if (SAFE_TAGS.has(tag)) return [];
@@ -1656,6 +1776,15 @@ function checkElementHeroEyebrow(el, style, tag, window) {
     siblingFontSize,
     siblingLetterSpacing: resolveLengthPx(sibStyle.letterSpacing, siblingFontSize) || 0,
   });
+}
+
+function checkRepeatedSectionKickersFromDoc(doc, win) {
+  const candidates = collectRepeatedSectionKickerCandidates(
+    doc,
+    (el) => win.getComputedStyle(el),
+    (value, fontSize) => resolveLengthPx(value, fontSize) || 0,
+  );
+  return checkRepeatedSectionKickers({ candidates });
 }
 
 function checkElementMotion(tag, style) {
@@ -2511,6 +2640,7 @@ if (IS_BROWSER) {
         return {
           type: f.type || f.id,
           category: ap ? ap.category : 'quality',
+          severity: ap?.severity || 'warning',
           detail: f.detail || f.snippet,
           name: ap ? ap.name : (f.type || f.id),
           description: ap ? ap.description : '',
@@ -2583,6 +2713,14 @@ if (IS_BROWSER) {
     if (typoFindings.length > 0) {
       pageLevelFindings.push(...typoFindings);
       allFindings.push({ el: document.body, findings: typoFindings });
+    }
+
+    const sectionKickerFindings = checkRepeatedSectionKickersDOM()
+      .map(f => ({ type: f.id, detail: f.snippet }))
+      .filter(f => _ruleOk(f.type));
+    if (sectionKickerFindings.length > 0) {
+      pageLevelFindings.push(...sectionKickerFindings);
+      allFindings.push({ el: document.body, findings: sectionKickerFindings });
     }
 
     const layoutFindings = checkLayout().filter(f => _ruleOk(f.type));
