@@ -6,6 +6,29 @@ Before writing code, you need: PRODUCT.md loaded, register identified and the ma
 
 Treat any approved visual direction (generated mock or stated reference) as a concrete contract for composition, hierarchy, density, atmosphere, signature motifs, and distinctive visual moves. Don't let mocks replace structure, copy, accessibility, or state design. But if the live result lacks the approved direction's major ingredients, the implementation is wrong.
 
+## Step 0: Project Foundation
+
+Before shape, before code: figure out what kind of project you're working in.
+
+Look at the working directory. Run `ls`. Check for:
+
+- An existing framework: `astro.config.mjs/ts`, `next.config.js/ts`, `nuxt.config.ts`, `svelte.config.js`, `vite.config.js/ts`, `package.json` with framework deps, `Cargo.toml` + Leptos/Yew, `Gemfile` + Rails. **If found, use it.** Do not start a parallel build, do not introduce a second framework, do not write to `dist/` or `build/` directly. Whatever pipeline the project has, respect it.
+- An existing component library or design system: `src/components/`, `app/components/`, a `tokens.css` / `theme.ts`, an `astro.config` `integrations`. Read what's there before adding to it.
+- An existing icon set: `lucide-react`, `@phosphor-icons/react`, `@iconify/*`, hand-rolled SVG sprites in `assets/icons/`. **Use what's already in the project**; don't introduce a second set.
+
+If the directory is empty (greenfield), don't pick a framework silently. Ask the user via the AskUserQuestion tool, with sensible defaults framed by the brief:
+
+```text
+What should this be built on?
+  - Astro (default for content-led brand sites, landing pages, marketing surfaces)
+  - SvelteKit / Next.js / Nuxt (when the brief implies an app surface or significant interactivity)
+  - Single index.html (one-shot demo, prototype, or a deliberately framework-free experiment)
+```
+
+Default: Astro for brand briefs, the project's existing framework for product briefs. Ask once; don't re-ask mid-task.
+
+**Why this matters.** A 1200-line single index.html with inline `<style>` is not how a 2026 designer-engineer ships a brand site. Picking a real framework gives you the asset pipeline (image optimization, font subscription, MDX), real component decomposition, and the ecosystem (icon libraries, design tokens). Skipping the framework decision and writing flat HTML "to satisfy the spec" produces work that reads as a 2018 prototype regardless of how good the visuals are.
+
 ## Step 1: Shape the Design
 
 Run {{command_prefix}}impeccable shape, passing along whatever feature description the user provided. Shape is **required** for craft; it is what produces a confirmed direction.
@@ -116,6 +139,8 @@ Implement the feature following the design brief. Build in passes so structure, 
 - Design realistic state coverage: default, hover where supported, focus-visible, active, disabled, loading, error, success, empty, overflow, long text, short text, and first-run states where relevant.
 - Make interaction quality feel finished: keyboard paths, touch targets, feedback timing, scroll behavior, transitions between states, and no hover-only functionality.
 - Use icons from the project's established icon set when available. If no set exists, choose a coherent library or use accessible text controls; do not mix unrelated icon styles.
+- Respect the build pipeline. If the project uses Astro / SvelteKit / Next / Vite / etc., edit the source files and run the project's build (`npm run build` or equivalent); do not write to `build/` / `dist/` / `.next/` directly with `cat`, heredoc, or Bash redirects. Bypassing the pipeline skips asset hashing, image optimization, code splitting, and CSS extraction; it also produces output the project's own dev server won't serve.
+- Verify external image URLs before referencing them. If you have an image-search tool or web-fetch capability, use it to confirm the URL exists and matches the brand's physical object. Guessed photo IDs (Unsplash, CDN paths) often 404 and ship the page as broken-image placeholders. Without a verification tool, prefer fewer images you're confident about over more you guessed.
 - Optimize imagery and media: correct dimensions, useful alt text, lazy loading below the fold, modern formats when practical, responsive `srcset` / `picture` for raster assets, and no project-referenced asset left outside the workspace.
 - Make motion feel premium: use atmospheric blur, filter, mask, shadow, or reveal effects when they improve the experience; avoid casual layout-property animation, bound expensive effects, verify smoothness in-browser, respect reduced motion, and avoid choreography that blocks task completion.
 - Preserve maintainability: reusable local patterns, clear component boundaries, project conventions, no rasterized UI text, and no hard-coded one-off hacks when a better local pattern exists.
