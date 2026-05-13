@@ -341,14 +341,17 @@ describe('detectHtml — hero-eyebrow-chip', () => {
     'Span Eyebrow Above Hero',
     'Pill Chip Above Hero',
     'Already Uppercase Text',
+    // The rule no longer gates on heading font size (modern hero h1s
+    // use clamp() / vw / var() that jsdom can't resolve), and the
+    // eyebrow text ceiling moved 30 → 60 chars. Both shapes now flag.
+    'Body-Sized Heading Below Eyebrow',
+    'Long Uppercase Sentence Above Hero',
   ];
   const SHOULD_PASS = [
     'Eyebrow With Normal Tracking',
-    'Body-Sized Heading Below Eyebrow',
     'Uppercase Caption Far From Hero',
     'Hero With No Eyebrow',
     'Heading Above Heading',
-    'Long Uppercase Sentence Above Hero',
   ];
 
   it('hero-eyebrow-chip: flags only the should-flag column', async () => {
