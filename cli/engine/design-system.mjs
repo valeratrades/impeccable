@@ -43,7 +43,7 @@ function resolveDesignMdPath(cwd = process.cwd()) {
 function resolveDesignSidecarPath(cwd = process.cwd(), contextDir = cwd) {
   // Central sidecar location; keep in sync with lib/cache-root.mjs centralImpeccableDir.
   const home = os.homedir();
-  const base = (process.env.IMPECCABLE_CACHE_ROOT && process.env.IMPECCABLE_CACHE_ROOT.trim()) || path.join(home, 'tmp', '.impeccable', '.cache');
+  const base = (process.env.IMPECCABLE_CACHE_ROOT && process.env.IMPECCABLE_CACHE_ROOT.trim()) || path.join((process.env.XDG_CACHE_HOME && process.env.XDG_CACHE_HOME.trim()) || path.join(home, '.cache'), 'impeccable');
   const abs = path.resolve(cwd);
   const rel = path.relative(home, abs);
   const cacheKey = (rel && !rel.startsWith('..') && !path.isAbsolute(rel)) ? rel : abs.replace(/^[/\\]+/, '');

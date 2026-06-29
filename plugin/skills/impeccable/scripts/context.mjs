@@ -50,7 +50,7 @@ const WORKSPACE_DISCOVERY_IGNORED_DIRS = new Set([
 
 const UPDATE_HOST = (process.env.IMPECCABLE_UPDATE_HOST || 'https://impeccable.style').replace(/\/$/, '');
 const UPDATE_CACHE_PATH =
-  process.env.IMPECCABLE_UPDATE_CACHE || path.join(os.homedir(), 'tmp', '.impeccable', '.cache', 'update-check.json');
+  process.env.IMPECCABLE_UPDATE_CACHE || path.join((process.env.XDG_CACHE_HOME && process.env.XDG_CACHE_HOME.trim()) || path.join(os.homedir(), '.cache'), 'impeccable', 'update-check.json');
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000; // throttle the network poll to once a day
 const RENOTIFY_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // don't re-surface the same version for a week
 const FETCH_TIMEOUT_MS = 1200;

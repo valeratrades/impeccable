@@ -23,7 +23,7 @@ import { join, dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 // centralImpeccableDir (this CLI tree cannot share runtime code with the skill).
 function centralImpeccableDir(root) {
   const home = os.homedir();
-  const base = (process.env.IMPECCABLE_CACHE_ROOT && process.env.IMPECCABLE_CACHE_ROOT.trim()) || join(home, 'tmp', '.impeccable', '.cache');
+  const base = (process.env.IMPECCABLE_CACHE_ROOT && process.env.IMPECCABLE_CACHE_ROOT.trim()) || join((process.env.XDG_CACHE_HOME && process.env.XDG_CACHE_HOME.trim()) || join(home, '.cache'), 'impeccable');
   const abs = resolve(root);
   const rel = relative(home, abs);
   const key = (rel && !rel.startsWith('..') && !isAbsolute(rel)) ? rel : abs.replace(/^[/\\]+/, '');
