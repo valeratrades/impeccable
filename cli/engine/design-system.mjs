@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 
 import { finding } from './findings.mjs';
 import { GENERIC_FONTS } from './shared/constants.mjs';
@@ -40,8 +41,14 @@ function resolveDesignMdPath(cwd = process.cwd()) {
 }
 
 function resolveDesignSidecarPath(cwd = process.cwd(), contextDir = cwd) {
+  // Central sidecar location; keep in sync with lib/cache-root.mjs centralImpeccableDir.
+  const home = os.homedir();
+  const base = (process.env.IMPECCABLE_CACHE_ROOT && process.env.IMPECCABLE_CACHE_ROOT.trim()) || path.join(home, 'tmp', '.impeccable', '.cache');
+  const abs = path.resolve(cwd);
+  const rel = path.relative(home, abs);
+  const cacheKey = (rel && !rel.startsWith('..') && !path.isAbsolute(rel)) ? rel : abs.replace(/^[/\\]+/, '');
   const candidates = [
-    path.join(cwd, '.impeccable', 'design.json'),
+    path.join(base, cacheKey, 'design.json'),
     path.join(cwd, 'DESIGN.json'),
     path.join(contextDir, 'DESIGN.json'),
   ];

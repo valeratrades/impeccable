@@ -16,14 +16,26 @@
  */
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync, statSync } from 'node:fs';
+import os from 'node:os';
 import { join, dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 
+// Central state dir for a project root; keep in sync with lib/cache-root.mjs
+// centralImpeccableDir (this CLI tree cannot share runtime code with the skill).
+function centralImpeccableDir(root) {
+  const home = os.homedir();
+  const base = (process.env.IMPECCABLE_CACHE_ROOT && process.env.IMPECCABLE_CACHE_ROOT.trim()) || join(home, 'tmp', '.impeccable', '.cache');
+  const abs = resolve(root);
+  const rel = relative(home, abs);
+  const key = (rel && !rel.startsWith('..') && !isAbsolute(rel)) ? rel : abs.replace(/^[/\\]+/, '');
+  return join(base, key);
+}
+
 export function getConfigPath(root) {
-  return join(root, '.impeccable', 'config.json');
+  return join(centralImpeccableDir(root), 'config.json');
 }
 
 export function getLocalConfigPath(root) {
-  return join(root, '.impeccable', 'config.local.json');
+  return join(centralImpeccableDir(root), 'config.local.json');
 }
 
 function safeReadJson(filePath) {

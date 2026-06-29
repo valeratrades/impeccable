@@ -1,12 +1,12 @@
 /**
- * Tests for project-local Impeccable path resolution.
+ * Tests for central Impeccable path resolution.
  * Run with: node --test tests/impeccable-paths.test.mjs
  */
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 
 import {
@@ -21,22 +21,29 @@ import {
   resolveDesignSidecarPath,
   resolveLiveConfigPath,
 } from '../skill/scripts/lib/impeccable-paths.mjs';
+import { centralImpeccableDir } from '../skill/scripts/lib/cache-root.mjs';
 
-describe('impeccable project paths', () => {
+// Central state dir for a project root, mirroring what the getters compute.
+const imp = (root, ...parts) => join(centralImpeccableDir(root), ...parts);
+
+describe('impeccable central paths', () => {
   let tmp;
 
   beforeEach(() => {
     tmp = mkdtempSync(join(tmpdir(), 'impeccable-paths-'));
+    // Pin the central cache under tmp so the suite stays hermetic.
+    process.env.IMPECCABLE_CACHE_ROOT = join(tmp, '.cache');
   });
 
   afterEach(() => {
+    delete process.env.IMPECCABLE_CACHE_ROOT;
     rmSync(tmp, { recursive: true, force: true });
   });
 
-  it('resolves the generated design sidecar under .impeccable', () => {
-    assert.equal(getDesignSidecarPath(tmp), join(tmp, '.impeccable', 'design.json'));
+  it('resolves the generated design sidecar under the central cache', () => {
+    assert.equal(getDesignSidecarPath(tmp), imp(tmp, 'design.json'));
 
-    mkdirSync(join(tmp, '.impeccable'), { recursive: true });
+    mkdirSync(centralImpeccableDir(tmp), { recursive: true });
     writeFileSync(join(tmp, 'DESIGN.json'), '{"source":"legacy"}');
     writeFileSync(getDesignSidecarPath(tmp), '{"source":"new"}');
 
@@ -50,7 +57,7 @@ describe('impeccable project paths', () => {
     assert.equal(resolveDesignSidecarPath(tmp), legacyPath);
   });
 
-  it('uses .impeccable/live/config.json as the default live config path', () => {
+  it('uses the central live/config.json as the default live config path', () => {
     assert.equal(resolveLiveConfigPath({ cwd: tmp, scriptsDir: join(tmp, 'scripts'), env: {} }), getLiveConfigPath(tmp));
   });
 
@@ -65,7 +72,7 @@ describe('impeccable project paths', () => {
 
   it('lets IMPECCABLE_LIVE_CONFIG override both new and legacy config locations', () => {
     const override = join(tmp, 'custom-live-config.json');
-    mkdirSync(join(tmp, '.impeccable', 'live'), { recursive: true });
+    mkdirSync(dirname(getLiveConfigPath(tmp)), { recursive: true });
     writeFileSync(getLiveConfigPath(tmp), '{"source":"new"}');
     writeFileSync(override, '{"source":"override"}');
 
@@ -75,13 +82,13 @@ describe('impeccable project paths', () => {
     );
   });
 
-  it('places live server, session, and annotation state under .impeccable/live', () => {
-    assert.equal(getLiveServerPath(tmp), join(tmp, '.impeccable', 'live', 'server.json'));
-    assert.equal(getLiveSessionsDir(tmp), join(tmp, '.impeccable', 'live', 'sessions'));
-    assert.equal(getLiveAnnotationsDir(tmp), join(tmp, '.impeccable', 'live', 'annotations'));
+  it('places live server, session, and annotation state under the central cache', () => {
+    assert.equal(getLiveServerPath(tmp), imp(tmp, 'live', 'server.json'));
+    assert.equal(getLiveSessionsDir(tmp), imp(tmp, 'live', 'sessions'));
+    assert.equal(getLiveAnnotationsDir(tmp), imp(tmp, 'live', 'annotations'));
   });
 
-  it('places .impeccable state under the active monorepo child project', () => {
+  it('keys central state by the active monorepo child project', () => {
     writeFileSync(join(tmp, 'package.json'), JSON.stringify({
       private: true,
       workspaces: ['apps/*'],
@@ -91,12 +98,12 @@ describe('impeccable project paths', () => {
     const options = { targetPath: 'apps/dashboard/src/App.jsx' };
     const projectRoot = join(tmp, 'apps', 'dashboard');
 
-    assert.equal(getDesignSidecarPath(tmp, options), join(projectRoot, '.impeccable', 'design.json'));
-    assert.equal(getLiveConfigPath(tmp, options), join(projectRoot, '.impeccable', 'live', 'config.json'));
-    assert.equal(getLiveServerPath(tmp, options), join(projectRoot, '.impeccable', 'live', 'server.json'));
-    assert.equal(getLiveSessionsDir(tmp, options), join(projectRoot, '.impeccable', 'live', 'sessions'));
-    assert.equal(getLiveAnnotationsDir(tmp, options), join(projectRoot, '.impeccable', 'live', 'annotations'));
-    assert.equal(getCritiqueDir(tmp, options), join(projectRoot, '.impeccable', 'critique'));
+    assert.equal(getDesignSidecarPath(tmp, options), imp(projectRoot, 'design.json'));
+    assert.equal(getLiveConfigPath(tmp, options), imp(projectRoot, 'live', 'config.json'));
+    assert.equal(getLiveServerPath(tmp, options), imp(projectRoot, 'live', 'server.json'));
+    assert.equal(getLiveSessionsDir(tmp, options), imp(projectRoot, 'live', 'sessions'));
+    assert.equal(getLiveAnnotationsDir(tmp, options), imp(projectRoot, 'live', 'annotations'));
+    assert.equal(getCritiqueDir(tmp, options), imp(projectRoot, 'critique'));
     assert.equal(getLegacyLiveServerPath(tmp, options), join(projectRoot, '.impeccable-live.json'));
     assert.equal(resolveLiveConfigPath({ cwd: tmp, scriptsDir: join(tmp, 'scripts'), env: {}, targetPath: options.targetPath }), getLiveConfigPath(tmp, options));
   });
@@ -105,17 +112,17 @@ describe('impeccable project paths', () => {
     writeFileSync(join(tmp, 'turbo.json'), '{"tasks":{}}');
     mkdirSync(join(tmp, 'apps', 'admin', 'src'), { recursive: true });
     writeFileSync(join(tmp, 'apps', 'admin', 'src', 'App.jsx'), 'export default null;\n');
-    mkdirSync(join(tmp, '.impeccable', 'live'), { recursive: true });
-    writeFileSync(join(tmp, '.impeccable', 'live', 'config.json'), '{"source":"root"}');
+    mkdirSync(imp(tmp, 'live'), { recursive: true });
+    writeFileSync(imp(tmp, 'live', 'config.json'), '{"source":"root"}');
 
     assert.equal(
       resolveLiveConfigPath({ cwd: tmp, scriptsDir: join(tmp, 'scripts'), env: {}, targetPath: 'apps/admin/src/App.jsx' }),
-      join(tmp, 'apps', 'admin', '.impeccable', 'live', 'config.json'),
+      imp(join(tmp, 'apps', 'admin'), 'live', 'config.json'),
     );
   });
 
   it('reads new live server state before legacy recovery state', () => {
-    mkdirSync(join(tmp, '.impeccable', 'live'), { recursive: true });
+    mkdirSync(imp(tmp, 'live'), { recursive: true });
     writeFileSync(getLiveServerPath(tmp), JSON.stringify({ port: 8401, token: 'new' }));
     writeFileSync(getLegacyLiveServerPath(tmp), JSON.stringify({ port: 8400, token: 'legacy' }));
 
@@ -133,7 +140,7 @@ describe('impeccable project paths', () => {
   });
 
   it('keeps live server state when pid probing returns EPERM', () => {
-    mkdirSync(join(tmp, '.impeccable', 'live'), { recursive: true });
+    mkdirSync(imp(tmp, 'live'), { recursive: true });
     writeFileSync(getLiveServerPath(tmp), JSON.stringify({ port: 8401, token: 'new', pid: 12345 }));
     const originalKill = process.kill;
     process.kill = () => {
@@ -153,7 +160,7 @@ describe('impeccable project paths', () => {
   });
 
   it('removes stale live server state when pid probing returns ESRCH', () => {
-    mkdirSync(join(tmp, '.impeccable', 'live'), { recursive: true });
+    mkdirSync(imp(tmp, 'live'), { recursive: true });
     writeFileSync(getLiveServerPath(tmp), JSON.stringify({ port: 8401, token: 'new', pid: 12345 }));
     const originalKill = process.kill;
     process.kill = () => {

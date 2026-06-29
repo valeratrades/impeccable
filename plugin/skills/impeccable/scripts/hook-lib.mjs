@@ -37,6 +37,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
+import { centralImpeccableDir } from './lib/cache-root.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -112,19 +113,19 @@ function safeReadJson(filePath) {
 }
 
 export function getConfigPath(cwd) {
-  return path.join(cwd, '.impeccable', 'config.json');
+  return path.join(centralImpeccableDir(cwd), 'config.json');
 }
 
 export function getLocalConfigPath(cwd) {
-  return path.join(cwd, '.impeccable', 'config.local.json');
+  return path.join(centralImpeccableDir(cwd), 'config.local.json');
 }
 
 export function getCachePath(cwd) {
-  return path.join(cwd, '.impeccable', 'hook.cache.json');
+  return path.join(centralImpeccableDir(cwd), 'hook.cache.json');
 }
 
 export function getPendingPath(cwd) {
-  return path.join(cwd, '.impeccable', 'hook.pending.json');
+  return path.join(centralImpeccableDir(cwd), 'hook.pending.json');
 }
 
 export function resolveProjectCwd(event, fallback = process.cwd()) {

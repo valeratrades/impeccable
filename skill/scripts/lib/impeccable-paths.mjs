@@ -1,13 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { resolveProjectRoot } from '../context.mjs';
+import { centralImpeccableDir } from './cache-root.mjs';
 
 export const IMPECCABLE_DIR = '.impeccable';
 export const LIVE_DIR = 'live';
 export const CRITIQUE_DIR = 'critique';
 
 export function getImpeccableDir(cwd = process.cwd(), options = {}) {
-  return path.join(resolveProjectRoot(cwd, options), IMPECCABLE_DIR);
+  return centralImpeccableDir(resolveProjectRoot(cwd, options));
 }
 
 export function getDesignSidecarPath(cwd = process.cwd(), options = {}) {
